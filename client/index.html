@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Don't Starve Clone - Multiplayer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #1a1a2e;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    
+    #gameCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+    
+    #ui-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      pointer-events: none;
+      z-index: 100;
+    }
+    
+    #connection-status {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    #connection-status .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #f44336;
+      animation: pulse 1s infinite;
+    }
+    
+    #connection-status.connected .dot {
+      background: #4caf50;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    #player-count {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+    
+    #stats-panel {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      padding: 15px 30px;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 12px;
+      border: 2px solid #333;
+    }
+    
+    .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #888;
+      text-transform: uppercase;
+    }
+    
+    .stat-bar {
+      width: 80px;
+      height: 8px;
+      background: #333;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .stat-fill {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    
+    .stat-fill.health { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+    .stat-fill.hunger { background: linear-gradient(90deg, #d35400, #e67e22); }
+    .stat-fill.sanity { background: linear-gradient(90deg, #8e44ad, #9b59b6); }
+    
+    #controls-hint {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 8px;
+      color: #aaa;
+      font-size: 12px;
+    }
+    
+    #day-indicator {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 20px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+    
+    .day-phase-day { border: 2px solid #f1c40f; }
+    .day-phase-dusk { border: 2px solid #e67e22; }
+    .day-phase-night { border: 2px solid #3498db; }
+    
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      z-index: 1000;
+    }
+    
+    #loading h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    #loading .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #333;
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    #loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <h1>🎮 Don't Starve Clone</h1>
+    <div class="spinner"></div>
+    <p style="margin-top: 20px;">Connecting to server...</p>
+  </div>
+  
+  <canvas id="gameCanvas"></canvas>
+  
+  <div id="ui-overlay">
+    <div id="connection-status">
+      <span class="dot"></span>
+      <span id="status-text">Connecting...</span>
+    </div>
+    
+    <div id="player-count">Players: <span id="count">0</span></div>
+    
+    <div id="day-indicator" class="day-phase-day">
+      <span id="day-text">☀️ Day</span>
+    </div>
+    
+    <div id="stats-panel">
+      <div class="stat">
+        <span class="stat-label">❤️ Health</span>
+        <div class="stat-bar">
+          <div class="stat-fill health" id="health-bar" style="width: 100%"></div>
+        </div>
+      </div>
+      <div class="stat">
+        <span class="stat-label">🍖 Hunger</span>
+        <div class="stat-bar">
+          <div class="stat-fill hunger" id="hunger-bar" style="width: 100%"></div>
+        </div>
+      </div>
+      <div class="stat">
+        <span class="stat-label">🧠 Sanity</span>
+        <div class="stat-bar">
+          <div class="stat-fill sanity" id="sanity-bar" style="width: 100%"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="controls-hint">
+      WASD / Arrow Keys to move • Space for action
+    </div>
+  </div>
+  
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

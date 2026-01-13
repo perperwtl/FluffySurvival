@@ -1,0 +1,19 @@
+{
+  "name": "@dont-starve-clone/client",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@babylonjs/core": "^7.34.3",
+    "@babylonjs/materials": "^7.34.3",
+    "@babylonjs/loaders": "^7.34.3",
+    "colyseus.js": "^0.16.22"
+  },
+  "devDependencies": {
+    "vite": "^6.0.3"
+  }
+}

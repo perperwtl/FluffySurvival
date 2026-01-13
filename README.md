@@ -57,7 +57,7 @@ TODO: Add screenshots
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/survival-multiplayer-game.git
+git clone https://github.com/perperwtl/FluffySurvival.git
 cd survival-multiplayer-game
 
 # Install server dependencies
